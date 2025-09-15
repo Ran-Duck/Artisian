@@ -99,9 +99,6 @@ class VoiceManager {
     this.pendingRequests.add(requestKey)
 
     return new Promise((resolve, reject) => {
-      // Clear any existing queue items to prevent overlaps
-      this.speechQueue = []
-
       this.speechQueue.push({
         text,
         options,
@@ -171,11 +168,12 @@ class VoiceManager {
   }
 
   async playAudio(base64Audio) {
-    return new Promise((resolve, reject) => {
-      try {
-        const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`)
-        this.currentAudio = audio
+    try {
+      const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`)
+      this.currentAudio = audio
 
+      // Create a promise that resolves on 'ended' and rejects on 'error'
+      const playbackPromise = new Promise((resolve, reject) => {
         audio.onended = () => {
           console.log("[voice] Audio playback ended")
           this.currentAudio = null
@@ -186,15 +184,21 @@ class VoiceManager {
           this.currentAudio = null
           reject(error)
         }
+      })
 
-        console.log("[voice] Starting audio playback")
-        audio.play()
-      } catch (error) {
-        console.error("[voice] Audio setup error:", error)
-        this.currentAudio = null
-        reject(error)
-      }
-    })
+      console.log("[voice] Starting audio playback")
+      // The play() method returns a promise that resolves when playback begins
+      // or rejects if it fails (e.g., autoplay blocked).
+      await audio.play()
+
+      // Wait for the audio to finish playing
+      await playbackPromise
+    } catch (error) {
+      console.error("[voice] Audio setup or playback error:", error)
+      this.currentAudio = null
+      // Re-throw the error so it can be handled by the caller (directSpeak)
+      throw error
+    }
   }
 
   fallbackSpeak(text) {
