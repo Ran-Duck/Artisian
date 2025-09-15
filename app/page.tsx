@@ -14,12 +14,13 @@ export default function WelcomePage() {
   const { speak, speakThenListen, isListening, isSpeaking, lastCommand, error } = useVoiceLoop()
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(true)
   const [hasStarted, setHasStarted] = useState(false)
+  const [isExperienceStarted, setExperienceStarted] = useState(false)
 
   useEffect(() => {
-    if (isVoiceEnabled && !hasStarted) {
+    if (isVoiceEnabled && isExperienceStarted && !hasStarted) {
       initializeWelcome()
     }
-  }, [isVoiceEnabled])
+  }, [isVoiceEnabled, isExperienceStarted, hasStarted])
 
   useEffect(() => {
     if (lastCommand && isVoiceEnabled) {
@@ -68,8 +69,25 @@ export default function WelcomePage() {
     }
   }
 
+  const handleStartExperience = () => {
+    setExperienceStarted(true)
+  }
+
   return (
     <div className="min-h-screen bg-background p-4">
+      {!isExperienceStarted && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <Card className="p-8 text-center">
+            <CardContent>
+              <h2 className="text-2xl font-bold mb-4">Welcome to Artisan Showcase</h2>
+              <p className="text-muted-foreground mb-6">Click the button below to start the experience.</p>
+              <Button size="lg" onClick={handleStartExperience}>
+                Start Experience
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
       <div className="mx-auto max-w-md space-y-8 pt-8">
         {/* Header */}
         <div className="text-center space-y-4">
